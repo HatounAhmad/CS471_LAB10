@@ -1,9 +1,66 @@
-from django.shortcuts import render,redirect  # Add this import
+from django.shortcuts import render,redirect,get_object_or_404  # Add this import
 from django.http import HttpResponse
 from .models import Book
-from .models import Student
+from .models import Student,Address
 from django.db.models import Q
 from django.db.models import Count
+from .forms import StudentForm, AddressForm
+###################lab 10
+
+def list_students(request):
+    students = Student.objects.all()
+    return render(request, 'bookmodule/list_students.html', {'students': students})
+
+# Add a new student
+def add_student(request):
+    if request.method == 'POST':
+        student_form = StudentForm(request.POST)
+        address_form = AddressForm(request.POST)
+        if student_form.is_valid() and address_form.is_valid():
+            address = address_form.save()
+            student = student_form.save(commit=False)
+            student.address = address
+            student.save()
+            return redirect('list_students')
+    else:
+        student_form = StudentForm()
+        address_form = AddressForm()
+    return render(request, 'bookmodule/add_student.html', {'student_form': student_form, 'address_form': address_form})
+
+# Edit a student
+def edit_student(request, student_id):
+    student = get_object_or_404(Student, id=student_id)
+    address = student.address
+    if request.method == 'POST':
+        student_form = StudentForm(request.POST, instance=student)
+        address_form = AddressForm(request.POST, instance=address)
+        if student_form.is_valid() and address_form.is_valid():
+            student_form.save()
+            address_form.save()
+            return redirect('list_students')
+    else:
+        student_form = StudentForm(instance=student)
+        address_form = AddressForm(instance=address)
+    return render(request, 'bookmodule/edit_student.html', {'student_form': student_form, 'address_form': address_form})
+
+# Delete a student
+def delete_student(request, student_id):
+    student = get_object_or_404(Student, id=student_id)
+    student.delete()
+    return redirect('list_students')
+
+# Add an address
+def add_address(request):
+    if request.method == 'POST':
+        form = AddressForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('list_students')
+    else:
+        form = AddressForm()
+    return render(request, 'bookmodule/add_address.html', {'form': form})
+
+
 
 ##################lab9
 
